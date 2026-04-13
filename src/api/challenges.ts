@@ -5,6 +5,12 @@ import type {
   JoinGroupResponse,
   LeaderboardResponse,
   ChallengeState,
+  FoodEvaluationsResponse,
+  ChallengeUpdateRequest,
+  ApiActionResponse,
+  PaginatedResponse,
+  PublicChallengeListItem,
+  ChallengeHistoryResponse,
 } from '../types'
 
 export const challengesApi = {
@@ -16,12 +22,27 @@ export const challengesApi = {
     return response.data
   },
 
+  listPublic: async (page = 1, limit = 20) => {
+    const response = await apiClient.get<PaginatedResponse<PublicChallengeListItem>>(
+      '/api/challenges/public',
+      {
+        params: { page, limit },
+      }
+    )
+    return response.data
+  },
+
   getMyInstances: async () => {
-    const response = await apiClient.get<{ instances: any[] }>(
+    const response = await apiClient.get<ChallengeInstance[] | { instances: ChallengeInstance[] }>(
       '/api/challenges/me/instances'
     )
+
+    const rawInstances = Array.isArray(response.data)
+      ? response.data
+      : response.data.instances || []
+
     // Map API response to ensure instanceId and groupId are available
-    return response.data.instances.map((item: any) => ({
+    return rawInstances.map((item) => ({
       ...item,
       instanceId: item.id,
       groupId: item.group?.id,
@@ -37,22 +58,30 @@ export const challengesApi = {
     return response.data
   },
 
-  updateVisibility: async (instanceId: string, visibility: string) => {
-    const response = await apiClient.patch(`/api/challenges/instances/${instanceId}`, {
-      visibility,
-    })
+  joinGroup: async (groupId: string) => {
+    const response = await apiClient.post<JoinGroupResponse>(
+      `/api/challenges/groups/${groupId}/join`
+    )
+    return response.data
+  },
+
+  updateChallenge: async (instanceId: string, data: ChallengeUpdateRequest) => {
+    const response = await apiClient.patch<ApiActionResponse>(
+      `/api/challenges/instances/${instanceId}`,
+      data
+    )
     return response.data
   },
 
   cancelChallenge: async (instanceId: string) => {
-    const response = await apiClient.post(
+    const response = await apiClient.post<ApiActionResponse>(
       `/api/challenges/instances/${instanceId}/cancel`
     )
     return response.data
   },
 
   leaveGroup: async (groupId: string) => {
-    const response = await apiClient.post(
+    const response = await apiClient.post<ApiActionResponse>(
       `/api/challenges/groups/${groupId}/leave`
     )
     return response.data
@@ -71,6 +100,23 @@ export const challengesApi = {
   getState: async (instanceId: string, date: string) => {
     const response = await apiClient.get<ChallengeState>(
       `/api/challenges/instances/${instanceId}/me/state`,
+      {
+        params: { date },
+      }
+    )
+    return response.data
+  },
+
+  getHistory: async (instanceId: string) => {
+    const response = await apiClient.get<ChallengeHistoryResponse>(
+      `/api/challenges/instances/${instanceId}/me/history`
+    )
+    return response.data
+  },
+
+  getFoodEvaluations: async (instanceId: string, date: string) => {
+    const response = await apiClient.get<FoodEvaluationsResponse>(
+      `/api/challenges/instances/${instanceId}/me/food-evaluations`,
       {
         params: { date },
       }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { dailyRecordsApi } from '../api/dailyRecords'
 import { toast } from 'sonner'
 import { Plus, Loader2 } from 'lucide-react'
+import { getApiErrorMessage } from '../api/errors'
 
 export function SubmitLogsTab() {
   const [selectedDate, setSelectedDate] = useState(
@@ -25,12 +26,12 @@ export function SubmitLogsTab() {
     e.preventDefault()
 
     if (!foodForm.name.trim()) {
-      toast.error('Food name is required')
+      toast.error('Vui lòng nhập tên món ăn')
       return
     }
 
     if (foodForm.calories <= 0) {
-      toast.error('Calories must be greater than 0')
+      toast.error('Calories phải lớn hơn 0')
       return
     }
 
@@ -42,7 +43,7 @@ export function SubmitLogsTab() {
         calories: foodForm.calories,
         protein: foodForm.protein,
       })
-      toast.success('Food log added')
+      toast.success('Đã thêm log món ăn')
       setFoodForm({
         name: '',
         descriptionText: '',
@@ -50,7 +51,7 @@ export function SubmitLogsTab() {
         protein: 0,
       })
     } catch (error) {
-      toast.error('Failed to add food log')
+      toast.error(getApiErrorMessage(error, 'Không thể thêm log món ăn'))
     } finally {
       setIsFoodLoading(false)
     }
@@ -60,17 +61,17 @@ export function SubmitLogsTab() {
     e.preventDefault()
 
     if (waterAmount <= 0) {
-      toast.error('Amount must be greater than 0')
+      toast.error('Lượng nước phải lớn hơn 0')
       return
     }
 
     setIsWaterLoading(true)
     try {
       await dailyRecordsApi.addWaterLog(selectedDate, waterAmount)
-      toast.success(`Added ${waterAmount}ml water`)
+      toast.success(`Đã thêm ${waterAmount}ml nước`)
       setWaterAmount(250)
     } catch (error) {
-      toast.error('Failed to add water log')
+      toast.error(getApiErrorMessage(error, 'Không thể thêm log nước'))
     } finally {
       setIsWaterLoading(false)
     }
@@ -81,7 +82,7 @@ export function SubmitLogsTab() {
       {/* Date Selector */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Select Date
+          Chọn ngày
         </label>
         <input
           type="date"
@@ -90,7 +91,7 @@ export function SubmitLogsTab() {
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          Currently logging for: <span className="font-mono font-semibold">{selectedDate}</span>
+          Đang ghi log cho ngày: <span className="font-mono font-semibold">{selectedDate}</span>
         </p>
       </div>
 
@@ -98,12 +99,12 @@ export function SubmitLogsTab() {
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           <Plus className="w-5 h-5 inline-block mr-2" />
-          Add Food Log
+          Thêm log món ăn
         </h3>
         <form onSubmit={handleAddFoodLog} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Food Name <span className="text-red-500">*</span>
+              Tên món ăn <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -117,7 +118,7 @@ export function SubmitLogsTab() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
+              Mô tả
             </label>
             <textarea
               value={foodForm.descriptionText}
@@ -177,7 +178,7 @@ export function SubmitLogsTab() {
             className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isFoodLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-            Add Food Log
+            Thêm log món ăn
           </button>
         </form>
       </div>
@@ -186,12 +187,12 @@ export function SubmitLogsTab() {
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           <Plus className="w-5 h-5 inline-block mr-2" />
-          Add Water Log
+          Thêm log nước
         </h3>
         <form onSubmit={handleAddWaterLog} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Amount (ml) <span className="text-red-500">*</span>
+              Lượng nước (ml) <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -225,7 +226,7 @@ export function SubmitLogsTab() {
             className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isWaterLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-            Add Water Log
+            Thêm log nước
           </button>
         </form>
       </div>

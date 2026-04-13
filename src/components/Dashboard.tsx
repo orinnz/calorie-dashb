@@ -21,7 +21,7 @@ export function Dashboard() {
       const data = await challengesApi.getMyInstances()
       setChallenges(data)
     } catch (error) {
-      console.error('Failed to load challenges:', error)
+      console.error('Không thể tải danh sách challenge:', error)
     } finally {
       setIsLoadingChallenges(false)
     }
@@ -39,10 +39,10 @@ export function Dashboard() {
         <div className="text-center max-w-md">
           <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            No Bot Selected
+            Chưa chọn bot
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Select a bot from the selector at the top to get started
+            Hãy chọn một bot ở bộ chọn phía trên để bắt đầu
           </p>
           <BotSelector />
         </div>
@@ -51,10 +51,10 @@ export function Dashboard() {
   }
 
   const tabs = [
-    { id: 'manage', label: 'Manage Groups' },
-    { id: 'logs', label: 'Submit Logs' },
-    { id: 'tracking', label: 'Tracking & Results' },
-    { id: 'advanced', label: 'Advanced' },
+    { id: 'manage', label: 'Quản lý nhóm' },
+    { id: 'logs', label: 'Gửi log' },
+    { id: 'tracking', label: 'Theo dõi & Kết quả' },
+    { id: 'advanced', label: 'Nâng cao' },
   ]
 
   return (
@@ -64,7 +64,7 @@ export function Dashboard() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Social Challenges Dashboard
+              Bảng điều khiển Social Challenges
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Bot: <span className="font-semibold">{currentBot.displayName}</span>
@@ -96,7 +96,7 @@ export function Dashboard() {
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <div className="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-3" />
-                <p className="text-gray-600 dark:text-gray-400">Loading challenges...</p>
+                <p className="text-gray-600 dark:text-gray-400">Đang tải danh sách challenge...</p>
               </div>
             </div>
           ) : (

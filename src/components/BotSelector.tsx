@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { LogOut, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Bot } from '../types'
+import { getApiErrorMessage } from '../api/errors'
 
 export function BotSelector() {
   const { currentBot, bots, loginAsBot, logout, isLoading } = useAuth()
@@ -16,16 +17,16 @@ export function BotSelector() {
 
     try {
       await loginAsBot(bot)
-      toast.success(`Logged in as ${bot.displayName}`)
+      toast.success(`Đăng nhập bot: ${bot.displayName}`)
       setIsOpen(false)
     } catch (error) {
-      toast.error('Failed to login as bot')
+      toast.error(getApiErrorMessage(error, 'Không thể đăng nhập bot'))
     }
   }
 
   const handleLogout = () => {
     logout()
-    toast.success('Logged out')
+    toast.success('Đã đăng xuất bot')
     setIsOpen(false)
   }
 
@@ -43,7 +44,7 @@ export function BotSelector() {
             <span className="text-xs opacity-75">({currentBot.id.slice(0, 8)})</span>
           </>
         ) : (
-          'Select Bot'
+          'Chọn bot'
         )}
       </button>
 
@@ -51,7 +52,7 @@ export function BotSelector() {
         <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
           <div className="p-3 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Available Bots
+              Danh sách bot
             </h3>
           </div>
 
@@ -79,7 +80,7 @@ export function BotSelector() {
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 text-red-700 dark:text-red-100 rounded-lg text-sm font-medium transition"
               >
                 <LogOut className="w-4 h-4" />
-                Logout
+                Đăng xuất
               </button>
             </div>
           )}

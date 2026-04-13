@@ -49,7 +49,7 @@ export interface ChallengeInstance {
   inviteCode?: string
   title: string
   challengeType: 'threshold' | 'avoidance' | string
-  status: 'active' | 'inactive' | 'cancelled'
+  status: 'active' | 'inactive' | 'cancelled' | 'completed'
   visibility: 'public' | 'private' | 'invite_only'
   startDate?: string
   endDate?: string
@@ -57,6 +57,8 @@ export interface ChallengeInstance {
   emoji?: string
   fileName?: string | null
   dailyMaxPoints?: number
+  totalScore?: number
+  totalPassDays?: number
   rule?: {
     type: string
     metric: string
@@ -77,12 +79,23 @@ export interface ChallengeInstance {
 
 export interface JoinGroupResponse {
   joined: boolean
+  message?: string
   member: {
     id: string
     challengeGroupId: string
     userId: string
     role: string
   }
+}
+
+export interface ChallengeUpdateRequest {
+  visibility?: 'public' | 'private' | 'invite_only'
+  endDate?: string
+}
+
+export interface ApiActionResponse {
+  success: boolean
+  message: string
 }
 
 // Daily Record Types
@@ -137,9 +150,84 @@ export interface ChallengeState {
     status: 'PASS_TEMP' | 'FAIL_TEMP' | 'PENDING'
     progress: number
     target: number
+    tempScoreProjection: number
   }
   display: {
     badge: string
     isLockedForDate: boolean
+  }
+}
+
+export interface WaterLogItem {
+  waterLogId: string
+  amountMl: number
+  timestamp: string
+}
+
+export interface ChallengeHistoryEntry {
+  date: string
+  status: 'pass' | 'fail' | 'partial' | string
+  score: number
+  progress: number
+  actual: number | null
+  target: number | null
+  isFinalized: boolean
+  failReason: string | null
+  foodEvaluations?: FoodEvaluationItem[]
+  waterLogs?: WaterLogItem[]
+}
+
+export interface ChallengeHistoryResponse {
+  instanceId: string
+  history: ChallengeHistoryEntry[]
+}
+
+// Food AI Evaluation Types
+export type FoodEvaluationStatus = 'eligible' | 'ineligible' | 'unknown'
+
+export interface FoodEvaluationResult {
+  status: FoodEvaluationStatus
+  confidence: number
+  reason: string
+  evaluatedAt: string
+}
+
+export interface FoodEvaluationItem {
+  foodLogId: string
+  foodName: string
+  calories: number
+  fileName: string | null
+  imageUrl: string | null
+  evaluation: FoodEvaluationResult | null
+}
+
+export interface FoodEvaluationsResponse {
+  date: string
+  items: FoodEvaluationItem[]
+}
+
+// Public Challenge Types
+export interface PublicChallengeListItem {
+  id: string
+  groupId: string
+  title: string
+  challengeType: 'threshold' | 'avoidance' | 'positive' | string
+  startDate: string
+  endDate: string
+  limit: number | null
+  emoji: string | null
+  status: 'active' | 'completed' | 'cancelled'
+  dailyMaxPoints: number
+  createdAt: string
+  memberCount: number
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  pagination: {
+    limit: number
+    page: number
+    totalPages: number
+    total: number
   }
 }
