@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "vite build",
+    "build:pages": "NITRO_PRESET=cloudflare-pages pnpm build",
+    "deploy": "pnpm build:pages && wrangler pages deploy .output/public",
     "preview": "vite preview",
     "test": "vitest run"
   },
@@ -38,7 +40,8 @@
     "jsdom": "^28.1.0",
     "typescript": "^5.7.2",
     "vite": "^8.0.0",
-    "vitest": "^3.0.5"
+    "vitest": "^3.0.5",
+    "wrangler": "^3.110.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
