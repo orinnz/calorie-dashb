@@ -8,10 +8,17 @@ import { TrackingResultsTab } from './TrackingResultsTab'
 import { AdvancedTab } from './AdvancedTab'
 import { AlertCircle } from 'lucide-react'
 import type { ChallengeInstance } from '../types'
+import { useNavigate } from '@tanstack/react-router'
+import type { DashboardSearch } from '../routes/index'
 
-export function Dashboard() {
+interface DashboardProps {
+  search: DashboardSearch
+}
+
+export function Dashboard({ search }: DashboardProps) {
   const { currentUser, currentBot } = useAuth()
-  const [activeTab, setActiveTab] = useState('manage')
+  const navigate = useNavigate({ from: '/' })
+  const activeTab = search.tab || 'manage'
   const [challenges, setChallenges] = useState<ChallengeInstance[]>([])
   const [isLoadingChallenges, setIsLoadingChallenges] = useState(false)
 
@@ -78,7 +85,9 @@ export function Dashboard() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() =>
+                navigate({ search: (prev) => ({ ...prev, tab: tab.id as any }) })
+              }
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 activeTab === tab.id
                   ? 'bg-blue-600 text-white'
@@ -109,7 +118,13 @@ export function Dashboard() {
               )}
               {activeTab === 'logs' && <SubmitLogsTab />}
               {activeTab === 'tracking' && (
-                <TrackingResultsTab challenges={challenges} />
+                <TrackingResultsTab
+                  challenges={challenges}
+                  selectedChallengeId={search.challengeId}
+                  onChallengeChange={(id) =>
+                    navigate({ search: (prev) => ({ ...prev, challengeId: id }) })
+                  }
+                />
               )}
               {activeTab === 'advanced' && (
                 <AdvancedTab

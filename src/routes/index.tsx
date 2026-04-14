@@ -1,8 +1,22 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Dashboard } from '#/components/Dashboard'
 
-export const Route = createFileRoute('/')({ component: App })
+export type DashboardSearch = {
+  tab?: 'manage' | 'logs' | 'tracking' | 'advanced'
+  challengeId?: string
+}
+
+export const Route = createFileRoute('/')({
+  validateSearch: (search: Record<string, unknown>): DashboardSearch => {
+    return {
+      tab: (search.tab as DashboardSearch['tab']) || 'manage',
+      challengeId: (search.challengeId as string) || undefined,
+    }
+  },
+  component: App,
+})
 
 function App() {
-  return <Dashboard />
+  const search = Route.useSearch()
+  return <Dashboard search={search} />
 }

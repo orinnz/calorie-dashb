@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { challengesApi } from '../api/challenges'
 import { toast } from 'sonner'
-import { Loader2, Calendar, ChartBar, Flame, Droplets, Utensils } from 'lucide-react'
+import { Loader2, Calendar, ChartBar, Flame, Droplets, Utensils, RefreshCw } from 'lucide-react'
 import type {
   ChallengeInstance,
   LeaderboardEntry,
@@ -12,15 +12,34 @@ import { getApiErrorMessage } from '../api/errors'
 
 interface TrackingResultsTabProps {
   challenges: ChallengeInstance[]
+  selectedChallengeId?: string
+  onChallengeChange?: (id: string) => void
 }
 
-export function TrackingResultsTab({ challenges }: TrackingResultsTabProps) {
-  const [selectedChallenge, setSelectedChallenge] = useState<ChallengeInstance | null>(
-    challenges.length > 0 ? challenges[0] : null
-  )
+export function TrackingResultsTab({
+  challenges,
+  selectedChallengeId,
+  onChallengeChange,
+}: TrackingResultsTabProps) {
+  const [selectedChallenge, setSelectedChallenge] = useState<ChallengeInstance | null>(() => {
+    if (selectedChallengeId) {
+      return challenges.find((c) => c.id === selectedChallengeId) || challenges[0] || null
+    }
+    return challenges.length > 0 ? challenges[0] : null
+  })
   const [history, setHistory] = useState<ChallengeHistoryEntry[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  useEffect(() => {
+    if (selectedChallengeId) {
+      const challenge = challenges.find((c) => c.id === selectedChallengeId)
+      if (challenge && challenge.id !== selectedChallenge?.id) {
+        setSelectedChallenge(challenge)
+      }
+    }
+  }, [selectedChallengeId, challenges])
 
   useEffect(() => {
     if (challenges.length === 0) {
@@ -29,7 +48,9 @@ export function TrackingResultsTab({ challenges }: TrackingResultsTabProps) {
     }
 
     if (!selectedChallenge) {
-      setSelectedChallenge(challenges[0])
+      const initial =
+        challenges.find((c) => c.id === selectedChallengeId) || challenges[0]
+      setSelectedChallenge(initial)
       return
     }
 
@@ -37,7 +58,7 @@ export function TrackingResultsTab({ challenges }: TrackingResultsTabProps) {
     if (!stillExists) {
       setSelectedChallenge(challenges[0])
     }
-  }, [challenges, selectedChallenge])
+  }, [challenges])
 
   const selectedInstanceId = selectedChallenge
     ? selectedChallenge.instanceId || selectedChallenge.id
@@ -53,30 +74,39 @@ export function TrackingResultsTab({ challenges }: TrackingResultsTabProps) {
           ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100'
           : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100'
 
-  const loadData = async () => {
-    if (!selectedInstanceId) return
+  const loadData = useCallback(
+    async (silent = false) => {
+      if (!selectedInstanceId) return
 
-    setIsLoading(true)
-    try {
-      const [historyData, leaderboardData] = await Promise.all([
-        challengesApi.getHistory(selectedInstanceId),
-        challengesApi.getLeaderboard(selectedInstanceId, 1, 50),
-      ])
+      if (silent) {
+        setIsRefreshing(true)
+      } else {
+        setIsLoading(true)
+      }
 
-      setHistory(historyData.history)
-      setLeaderboard(leaderboardData.data)
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Không thể tải dữ liệu challenge'))
-    } finally {
-      setIsLoading(false)
-    }
-  }
+      try {
+        const [historyData, leaderboardData] = await Promise.all([
+          challengesApi.getHistory(selectedInstanceId),
+          challengesApi.getLeaderboard(selectedInstanceId, 1, 50),
+        ])
+
+        setHistory(historyData.history)
+        setLeaderboard(leaderboardData.data)
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, 'Không thể tải dữ liệu challenge'))
+      } finally {
+        setIsLoading(false)
+        setIsRefreshing(false)
+      }
+    },
+    [selectedInstanceId]
+  )
 
   useEffect(() => {
     if (selectedInstanceId) {
       loadData()
     }
-  }, [selectedInstanceId])
+  }, [selectedInstanceId, loadData])
 
   const getEvaluationBadgeClass = (status: FoodEvaluationStatus | null) => {
     if (status === 'eligible') return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100'
@@ -102,21 +132,38 @@ export function TrackingResultsTab({ challenges }: TrackingResultsTabProps) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Chọn challenge
             </label>
-            <select
-              value={selectedChallenge?.id || ''}
-              onChange={(e) => {
-                const challenge = challenges.find((c) => c.id === e.target.value)
-                setSelectedChallenge(challenge || null)
-              }}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Chọn một challenge...</option>
-              {challenges.map((challenge) => (
-                <option key={challenge.id} value={challenge.id}>
-                  {challenge.title}
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={selectedChallenge?.id || ''}
+                onChange={(e) => {
+                  const challengeId = e.target.value
+                  if (onChallengeChange) {
+                    onChallengeChange(challengeId)
+                  } else {
+                    const challenge = challenges.find((c) => c.id === challengeId)
+                    setSelectedChallenge(challenge || null)
+                  }
+                }}
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Chọn một challenge...</option>
+                {challenges.map((challenge) => (
+                  <option key={challenge.id} value={challenge.id}>
+                    {challenge.title}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => loadData(true)}
+                disabled={isLoading || isRefreshing || !selectedInstanceId}
+                className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Tải lại dữ liệu"
+              >
+                <RefreshCw
+                  className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`}
+                />
+              </button>
+            </div>
           </div>
 
           {selectedChallenge && (

@@ -9,11 +9,12 @@
     "dev": "vite dev --port 3000",
     "build": "vite build",
     "build:pages": "NITRO_PRESET=cloudflare-pages pnpm build",
-    "deploy": "pnpm build:pages && wrangler pages deploy .output/public",
+    "deploy": "npm run build && wrangler deploy",
     "preview": "vite preview",
     "test": "vitest run"
   },
   "dependencies": {
+    "@cloudflare/vite-plugin": "^1.32.2",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "latest",
     "@tanstack/react-router": "latest",
