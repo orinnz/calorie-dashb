@@ -27,6 +27,7 @@ export function ManageGroupsTab({
   const [formData, setFormData] = useState({
     groupName: '',
     visibility: 'invite_only' as const,
+    durationDays: 7,
     useThreshold: false,
     metric: 'water_ml' as const,
     target: 2000,
@@ -82,6 +83,7 @@ export function ManageGroupsTab({
       const payload = {
         groupName: formData.groupName,
         visibility: formData.visibility,
+        durationDays: formData.durationDays,
       } as any
 
       if (formData.useThreshold) {
@@ -100,6 +102,7 @@ export function ManageGroupsTab({
       setFormData({
         groupName: '',
         visibility: 'invite_only',
+        durationDays: 7,
         useThreshold: false,
         metric: 'water_ml',
         target: 2000,
@@ -183,22 +186,39 @@ export function ManageGroupsTab({
             </div>
 
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                <input
-                  type="checkbox"
-                  checked={formData.useThreshold}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      useThreshold: e.target.checked,
-                    })
-                  }
-                  disabled={isCreating}
-                  className="rounded"
-                />
-                Dùng điều kiện ngưỡng
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Số ngày
               </label>
+              <input
+                type="number"
+                min={1}
+                max={365}
+                value={formData.durationDays}
+                onChange={(e) =>
+                  setFormData({ ...formData, durationDays: Math.max(1, parseInt(e.target.value) || 7) })
+                }
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isCreating}
+              />
             </div>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={formData.useThreshold}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    useThreshold: e.target.checked,
+                  })
+                }
+                disabled={isCreating}
+                className="rounded"
+              />
+              Dùng điều kiện ngưỡng (số cụ thể)
+            </label>
           </div>
 
           {formData.useThreshold && (

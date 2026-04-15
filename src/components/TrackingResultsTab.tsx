@@ -127,6 +127,7 @@ export function TrackingResultsTab({
   }
 
   const isWaterChallenge = selectedChallenge?.rule?.metric === 'water_ml'
+  const isAIEvalChallenge = selectedChallenge?.rule?.metric === 'food_ai_eligibility'
 
   return (
     <div className="space-y-6">
@@ -298,11 +299,13 @@ export function TrackingResultsTab({
                                     <h4 className="font-bold text-sm text-gray-900 dark:text-white truncate">{food.foodName}</h4>
                                     <p className="text-xs text-gray-500">{food.calories} kcal</p>
                                   </div>
-                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase whitespace-nowrap ${getEvaluationBadgeClass(food.evaluation?.status || null)}`}>
-                                    {getEvaluationBadgeLabel(food.evaluation?.status || null)}
-                                  </span>
+                                  {isAIEvalChallenge && (
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase whitespace-nowrap ${getEvaluationBadgeClass(food.evaluation?.status || null)}`}>
+                                      {getEvaluationBadgeLabel(food.evaluation?.status || null)}
+                                    </span>
+                                  )}
                                 </div>
-                                {food.evaluation?.reason && (
+                                {isAIEvalChallenge && food.evaluation?.reason && (
                                   <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
                                     {food.evaluation.reason}
                                   </p>

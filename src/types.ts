@@ -39,6 +39,7 @@ export interface Threshold {
 export interface QuickCreateChallengeRequest {
   groupName: string
   visibility: 'public' | 'private' | 'invite_only'
+  durationDays?: number
   threshold?: Threshold
 }
 
