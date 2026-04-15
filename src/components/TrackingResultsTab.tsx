@@ -112,6 +112,8 @@ export function TrackingResultsTab({
     if (status === 'eligible') return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100'
     if (status === 'ineligible') return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100'
     if (status === 'unknown') return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100'
+    if (status === 'pending') return 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
+    if (status === 'error') return 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-200'
     return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100'
   }
 
@@ -119,6 +121,8 @@ export function TrackingResultsTab({
     if (status === 'eligible') return 'Hợp lệ'
     if (status === 'ineligible') return 'Không hợp lệ'
     if (status === 'unknown') return 'Chưa chắc chắn'
+    if (status === 'pending') return 'Đang đánh giá...'
+    if (status === 'error') return 'Lỗi đánh giá'
     return 'Chưa đánh giá'
   }
 
@@ -343,30 +347,64 @@ export function TrackingResultsTab({
                 <p className="text-gray-500 text-sm text-center py-8">Chưa có thành viên tham gia</p>
               ) : (
                 <div className="space-y-2">
-                  {leaderboard.map((entry, index) => (
-                    <div
-                      key={entry.userId}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className={`flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-black ${
-                          index === 0 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
-                          index === 1 ? 'bg-gray-200 text-gray-700' :
-                          index === 2 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'
-                        }`}>
-                          {index + 1}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="font-bold text-sm text-gray-900 dark:text-white truncate">{entry.displayName}</p>
-                          <p className="text-[10px] text-gray-500 font-bold uppercase">{entry.totalPassDays} ngày đạt</p>
+                  {leaderboard.map((entry, index) => {
+                    const tp = entry.todayProgress
+                    const progressPct = tp ? Math.min(Math.round(tp.progress * 100), 100) : null
+                    return (
+                      <div
+                        key={entry.userId}
+                        className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className={`shrink-0 flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-black ${
+                              index === 0 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                              index === 1 ? 'bg-gray-200 text-gray-700' :
+                              index === 2 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'
+                            }`}>
+                              {index + 1}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="font-bold text-sm text-gray-900 dark:text-white truncate">{entry.displayName}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-[10px] text-gray-500 font-bold uppercase">{entry.totalPassDays} ngày đạt</p>
+                                {entry.currentStreak > 0 && (
+                                  <p className="text-[10px] text-orange-500 font-bold">🔥{entry.currentStreak}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-lg font-black text-blue-600 dark:text-blue-400 leading-none">{entry.totalScore}</p>
+                            <p className="text-[9px] text-blue-500/70 uppercase font-black tracking-tighter">điểm</p>
+                          </div>
                         </div>
+
+                        {tp && progressPct !== null && (
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-[9px] text-gray-400 uppercase font-bold tracking-wider">Hôm nay</span>
+                              <span className={`text-[9px] font-black ${
+                                tp.status === 'PASS' ? 'text-emerald-500' :
+                                tp.status === 'FAIL' ? 'text-red-400' : 'text-blue-400'
+                              }`}>
+                                {tp.status === 'PASS' ? '✓ Đạt' : tp.status === 'FAIL' ? '✗ Chưa đạt' : `${progressPct}%`}
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  tp.status === 'PASS' ? 'bg-emerald-500' :
+                                  tp.status === 'FAIL' ? 'bg-red-400' : 'bg-blue-400'
+                                }`}
+                                style={{ width: `${progressPct}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-black text-blue-600 dark:text-blue-400 leading-none">{entry.totalScore}</p>
-                        <p className="text-[9px] text-blue-500/70 uppercase font-black tracking-tighter">điểm</p>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>

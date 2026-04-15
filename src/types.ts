@@ -123,18 +123,42 @@ export interface DailyRecord {
 }
 
 // Leaderboard Types
+export interface LeaderboardTodayProgress {
+  status: 'IN_PROGRESS' | 'PASS' | 'FAIL'
+  progress: number
+  isAchieved: boolean
+  actual: number | null
+  target: number | null
+  metric: string | null
+}
+
 export interface LeaderboardEntry {
   userId: string
   displayName: string
   isAnonymous: boolean
   totalScore: number
   totalPassDays: number
-  lastScoredDate: string
+  currentStreak: number
+  lastScoredDate: string | null
+  todayProgress: LeaderboardTodayProgress | null
+}
+
+export interface LeaderboardScoringInfo {
+  lastFinalizedDate: string | null
+  nextUpdateAt: string | null
+  todayDate: string
+  note: string
 }
 
 export interface LeaderboardResponse {
   data: LeaderboardEntry[]
-  total: number
+  pagination: {
+    limit: number
+    page: number
+    totalPages: number
+    total: number
+  }
+  scoringInfo: LeaderboardScoringInfo
 }
 
 // State Types
@@ -183,7 +207,7 @@ export interface ChallengeHistoryResponse {
 }
 
 // Food AI Evaluation Types
-export type FoodEvaluationStatus = 'eligible' | 'ineligible' | 'unknown'
+export type FoodEvaluationStatus = 'eligible' | 'ineligible' | 'unknown' | 'pending' | 'error'
 
 export interface FoodEvaluationResult {
   status: FoodEvaluationStatus
