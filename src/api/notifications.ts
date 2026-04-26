@@ -18,6 +18,15 @@ export type NotificationOutcome =
   | 'skipped_disabled'
   | 'failed'
 
+export type FcmDebugStatus = 'sent' | 'unregistered' | 'failed'
+
+export interface FcmDebugResult {
+  status: FcmDebugStatus
+  token: string
+  httpStatus?: number
+  body?: string
+}
+
 export interface RegisterPushTokenRequest {
   token: string
   platform: 'ios' | 'android' | 'web'
@@ -73,5 +82,18 @@ export const notificationsApi = {
       { type, context: options?.context, force: options?.force }
     )
     return response.data
+  },
+
+  fcmDebug: async (input: {
+    token: string
+    title?: string
+    body?: string
+    data?: Record<string, unknown>
+  }) => {
+    const response = await apiClient.post<{ result: FcmDebugResult }>(
+      '/api/user/notifications/fcm-debug',
+      input
+    )
+    return response.data.result
   },
 }

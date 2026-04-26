@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Bell, BellOff, Loader2, Send, Trash2, Plus, Info } from 'lucide-react'
+import { Bell, BellOff, Loader2, Send, Trash2, Plus, Info, Zap } from 'lucide-react'
 import {
   notificationsApi,
+  type FcmDebugResult,
   type NotificationOutcome,
   type NotificationPreference,
 } from '../api/notifications'
@@ -99,12 +100,24 @@ export function NotificationsTab() {
   const [isSendingTest, setIsSendingTest] = useState(false)
   const [lastOutcome, setLastOutcome] = useState<NotificationOutcome | null>(null)
 
+  const [rawToken, setRawToken] = useState('')
+  const [rawTitle, setRawTitle] = useState('Debug push')
+  const [rawBody, setRawBody] = useState('Raw FCM test from dashboard')
+  const [rawDataInput, setRawDataInput] = useState('')
+  const [isSendingRaw, setIsSendingRaw] = useState(false)
+  const [lastRawResult, setLastRawResult] = useState<FcmDebugResult | null>(null)
+
   const loadPreferences = async () => {
     setIsLoadingPrefs(true)
     try {
       const data = await notificationsApi.getPreferences()
       setPreferences(data)
-      if (data.length > 0 && !testType) {
+      // Re-pick the first type whenever the current selection is missing
+      // from the freshly-loaded list — covers the "button stays disabled"
+      // case when the very first load failed (testType stayed '') and the
+      // user later clicked "Tải lại" to retry.
+      const stillValid = testType && data.some((p) => p.type === testType)
+      if (data.length > 0 && !stillValid) {
         setTestType(data[0].type)
       }
     } catch (error) {
@@ -224,6 +237,53 @@ export function NotificationsTab() {
       toast.error(getApiErrorMessage(error, 'Không bắn được notification'))
     } finally {
       setIsSendingTest(false)
+    }
+  }
+
+  const handleSendRaw = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const token = rawToken.trim()
+    if (token.length < 10) {
+      toast.error('Token tối thiểu 10 ký tự')
+      return
+    }
+    let data: Record<string, unknown> | undefined
+    const rawData = rawDataInput.trim()
+    if (rawData) {
+      try {
+        const parsed = JSON.parse(rawData)
+        if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+          throw new Error('Data phải là một JSON object')
+        }
+        data = parsed as Record<string, unknown>
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? `Data JSON sai: ${err.message}` : 'Data JSON sai'
+        )
+        return
+      }
+    }
+    setIsSendingRaw(true)
+    setLastRawResult(null)
+    try {
+      const result = await notificationsApi.fcmDebug({
+        token,
+        title: rawTitle.trim() || undefined,
+        body: rawBody.trim() || undefined,
+        data,
+      })
+      setLastRawResult(result)
+      if (result.status === 'sent') {
+        toast.success('FCM accept — kiểm tra device.')
+      } else if (result.status === 'unregistered') {
+        toast.message('FCM trả unregistered — token đã chết.')
+      } else {
+        toast.error(`FCM fail (HTTP ${result.httpStatus ?? '?'})`)
+      }
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Không bắn được raw FCM'))
+    } finally {
+      setIsSendingRaw(false)
     }
   }
 
@@ -553,6 +613,123 @@ export function NotificationsTab() {
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {OUTCOME_LABEL[lastOutcome].text}
               </p>
+            </div>
+          )}
+        </form>
+      </section>
+
+      {/* Raw FCM debug — bypass NotificationService */}
+      <section className="bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-800 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+          <Zap className="w-5 h-5 text-amber-500" />
+          Bắn FCM trực tiếp (debug)
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          POST <code>/api/user/notifications/fcm-debug</code> — gọi thẳng{' '}
+          <code className="mx-1">FcmClient.sendOne()</code>, bỏ qua mọi gating
+          (preference, quiet hours, dedup, no_tokens, NOTIFICATIONS_ENABLED).
+          Dùng để isolate "join challenge không thấy noti": nếu raw bắn về{' '}
+          <code>sent</code> mà device vẫn không nhận → vấn đề ở phía client/FCM
+          credentials. Nếu trả <code>unregistered</code> → token chết, đăng ký lại.
+        </p>
+
+        <form onSubmit={handleSendRaw} className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              FCM token
+            </label>
+            <textarea
+              value={rawToken}
+              onChange={(e) => setRawToken(e.target.value)}
+              rows={3}
+              placeholder="Paste FCM token từ thiết bị (Android: Logcat 'FCM token: ...'; iOS: messaging delegate)"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-xs focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Title
+              </label>
+              <input
+                type="text"
+                value={rawTitle}
+                onChange={(e) => setRawTitle(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Body
+              </label>
+              <input
+                type="text"
+                value={rawBody}
+                onChange={(e) => setRawBody(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Data (JSON object, optional)
+            </label>
+            <textarea
+              value={rawDataInput}
+              onChange={(e) => setRawDataInput(e.target.value)}
+              rows={2}
+              placeholder='{ "screen": "log_food", "instanceId": "..." }'
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+              <Info className="w-3.5 h-3.5" />
+              Mọi value sẽ stringify theo FCM contract.
+            </p>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={isSendingRaw}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition disabled:opacity-50"
+            >
+              {isSendingRaw ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Zap className="w-4 h-4" />
+              )}
+              Bắn raw FCM
+            </button>
+          </div>
+
+          {lastRawResult && (
+            <div className="mt-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 space-y-1">
+              <p className="text-sm">
+                Status:{' '}
+                <span
+                  className={`font-mono font-semibold ${
+                    lastRawResult.status === 'sent'
+                      ? 'text-green-700 dark:text-green-300'
+                      : lastRawResult.status === 'unregistered'
+                        ? 'text-amber-700 dark:text-amber-300'
+                        : 'text-red-700 dark:text-red-300'
+                  }`}
+                >
+                  {lastRawResult.status}
+                </span>
+              </p>
+              {lastRawResult.httpStatus !== undefined && (
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  HTTP: <code>{lastRawResult.httpStatus}</code>
+                </p>
+              )}
+              {lastRawResult.body && (
+                <pre className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap break-all font-mono p-2 bg-white dark:bg-black/30 rounded border border-gray-200 dark:border-gray-700">
+                  {lastRawResult.body}
+                </pre>
+              )}
             </div>
           )}
         </form>
