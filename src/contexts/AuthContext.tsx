@@ -1,7 +1,27 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { setAccessToken } from '../api/client'
+import { apiClient, setAccessToken } from '../api/client'
 import { authApi } from '../api/auth'
 import type { AuthUser, Bot } from '../types'
+
+/**
+ * Best-effort backfill so the bot's `user_profiles.timezone` matches the
+ * machine running the dashboard. Without this, fresh anonymous bots stay on
+ * the schema default `'UTC'` and cron-window pushes (`daily_food_log_nudge`
+ * 19–21h local, `streak_at_risk` 20–22h, etc.) fire at the wrong wall-clock
+ * time. The backend has its own opportunistic backfill from
+ * `request.cf.timezone`, but that's empty in `wrangler dev`, so this client
+ * call covers local QA. Errors are swallowed — the rest of the dashboard
+ * must keep working even if `PUT /profile` 4xx's for any reason.
+ */
+async function syncBrowserTimezone(): Promise<void> {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (!tz || tz === 'UTC') return
+    await apiClient.put('/api/user/profile', { timezone: tz })
+  } catch (err) {
+    console.warn('Timezone sync skipped:', err)
+  }
+}
 
 interface AuthContextType {
   currentUser: AuthUser | null
@@ -43,6 +63,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setCurrentUser(user)
           setCurrentBot(bot)
           setAccessToken(token)
+          // Re-sync on restore too — covers the case where a tester opens
+          // the dashboard from a different machine / timezone than last login.
+          void syncBrowserTimezone()
         }
       } catch (err) {
         console.error('Failed to restore auth:', err)
@@ -72,6 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           token: response.tokens.accessToken,
         })
       )
+
+      // Fire-and-forget — runs after token is set so the request carries auth.
+      // Don't block login if it fails.
+      void syncBrowserTimezone()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed'
       setError(message)
