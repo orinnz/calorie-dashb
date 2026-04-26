@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Dashboard } from '#/components/Dashboard'
 
 export type DashboardSearch = {
-  tab?: 'manage' | 'logs' | 'tracking' | 'advanced'
+  tab?: 'manage' | 'logs' | 'tracking' | 'advanced' | 'notifications'
   challengeId?: string
 }
 

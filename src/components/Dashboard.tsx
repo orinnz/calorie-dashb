@@ -6,6 +6,7 @@ import { ManageGroupsTab } from './ManageGroupsTab'
 import { SubmitLogsTab } from './SubmitLogsTab'
 import { TrackingResultsTab } from './TrackingResultsTab'
 import { AdvancedTab } from './AdvancedTab'
+import { NotificationsTab } from './NotificationsTab'
 import { AlertCircle } from 'lucide-react'
 import type { ChallengeInstance } from '../types'
 import { useNavigate } from '@tanstack/react-router'
@@ -62,6 +63,7 @@ export function Dashboard({ search }: DashboardProps) {
     { id: 'logs', label: 'Gửi log' },
     { id: 'tracking', label: 'Theo dõi & Kết quả' },
     { id: 'advanced', label: 'Nâng cao' },
+    { id: 'notifications', label: 'Thông báo' },
   ]
 
   return (
@@ -101,7 +103,9 @@ export function Dashboard({ search }: DashboardProps) {
 
         {/* Tab Content */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          {isLoadingChallenges && activeTab !== 'logs' ? (
+          {isLoadingChallenges &&
+          activeTab !== 'logs' &&
+          activeTab !== 'notifications' ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <div className="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-3" />
@@ -132,6 +136,7 @@ export function Dashboard({ search }: DashboardProps) {
                   onChallengesUpdate={loadChallenges}
                 />
               )}
+              {activeTab === 'notifications' && <NotificationsTab />}
             </>
           )}
         </div>
