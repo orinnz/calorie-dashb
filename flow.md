@@ -85,19 +85,23 @@ Chia layout thành 2 phần chính:
 
 **2.2. Lấy lại mã Invite của các nhóm mình đang trong**
 - **Method:** `GET /api/challenges/me/instances`
-- **Response:** Trả về 1 Array. Focus vào trường `group.inviteCode` để lấy mã Invite.
+- **Query (optional):** `status` (`all` default · `active` · `ended`), `sort` (`ending_soon` · `newest`), `type`, `metric`, `search`, `limit` (default 50), `page`.
+- **Response:** Phân trang. Focus vào trường `group.inviteCode` để lấy mã Invite.
   ```json
-  [
-    {
-      "id": "instance-id",
-      "title": "Tên nhóm",
-      "group": {
-        "id": "group-id",
-        "inviteCode": "CHX89K9",
-        "role": "owner"
+  {
+    "instances": [
+      {
+        "id": "instance-id",
+        "title": "Tên nhóm",
+        "group": {
+          "id": "group-id",
+          "inviteCode": "CHX89K9",
+          "role": "owner"
+        }
       }
-    }
-  ]
+    ],
+    "pagination": { "limit": 50, "page": 1, "totalPages": 1, "total": 1 }
+  }
   ```
 
 **2.3. Join Challenge bằng Code (cho Bot khác)**
