@@ -35,7 +35,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-const STORAGE_KEY = 'auth_session'
+// Bump suffix when the persisted shape changes. v2 added bot.timezone / bot.region;
+// any v1 session is dropped on first load so consumers never see the old shape.
+const STORAGE_KEY = 'auth_session_v2'
+const LEGACY_STORAGE_KEYS = ['auth_session']
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
@@ -55,6 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Restore auth from localStorage on mount
   useEffect(() => {
+    // Drop any pre-v2 sessions outright so we never deserialize the old Bot shape.
+    for (const key of LEGACY_STORAGE_KEYS) localStorage.removeItem(key)
+
     const restoreAuth = () => {
       try {
         const stored = localStorage.getItem(STORAGE_KEY)

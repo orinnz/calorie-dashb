@@ -16,9 +16,14 @@ import {
   Settings2,
   Users2,
 } from 'lucide-react'
-import type { ChallengeInstance } from '../types'
+import type { Bot, BotRegion, ChallengeInstance } from '../types'
 import { useNavigate } from '@tanstack/react-router'
 import type { DashboardSearch } from '../routes/index'
+
+function botRegion(bot: Pick<Bot, 'region' | 'timezone'>): BotRegion {
+  if (bot.region === 'vn' || bot.region === 'intl') return bot.region
+  return bot.timezone === 'Asia/Ho_Chi_Minh' ? 'vn' : 'intl'
+}
 
 interface DashboardProps {
   search: DashboardSearch
@@ -88,7 +93,8 @@ export function Dashboard({ search }: DashboardProps) {
     )
   }
 
-  const region = currentBot.region
+  const region = botRegion(currentBot)
+  const timezone = currentBot.timezone || 'UTC'
   const activeChallenges = challenges.filter((c) => c.status === 'active').length
 
   return (
@@ -126,7 +132,7 @@ export function Dashboard({ search }: DashboardProps) {
                 <StatChip
                   icon={<Globe2 className="h-3.5 w-3.5" />}
                   label="Timezone"
-                  value={currentBot.timezone}
+                  value={timezone}
                   mono
                 />
                 <StatChip
