@@ -4,7 +4,7 @@ import type { AxiosInstance } from 'axios'
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://hono-cloudflare-app.phuoc-anonydev2k3.workers.dev'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://hono-cloudflare-app.phuoc-anonydev2k3.workers.dev'
 
-const APP_CHECK_BYPASS_KEY = import.meta.env.VITE_APP_CHECK_BYPASS_KEY as
+const APP_CHECK_BYPASS_KEY = import.meta.env.VITE_APP_CHECK_BYPASS_KEY || "dev-bypass-key-change-me-for-prod" as
   | string
   | undefined
 
