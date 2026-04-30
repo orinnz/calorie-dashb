@@ -1,9 +1,15 @@
 // Bot Types
+export type BotRegion = 'vn' | 'intl'
+
 export interface Bot {
   id: string
   anonymousId: string
   displayName: string
   isBot: boolean
+  // IANA timezone from user_profiles.timezone (e.g. 'Asia/Ho_Chi_Minh').
+  timezone: string
+  // Derived from timezone: 'vn' for Asia/Ho_Chi_Minh, otherwise 'intl'.
+  region: BotRegion
 }
 
 export interface BotsResponse {
@@ -22,6 +28,8 @@ export interface AuthUser {
   displayName: string
   isBot: boolean
   anonymousId: string
+  timezone?: string
+  region?: BotRegion
 }
 
 export interface AuthResponse {
