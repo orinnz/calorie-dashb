@@ -264,3 +264,77 @@ export interface PaginatedResponse<T> {
     total: number
   }
 }
+
+// Subscription Admin Types
+export type SubscriptionStatus =
+  | 'active'
+  | 'in_grace'
+  | 'paused'
+  | 'expired'
+  | 'refunded'
+
+export interface AdminUserListItem {
+  userId: string
+  displayName: string | null
+  fileName: string | null
+  isAnonymous: boolean
+  isBot: boolean
+  isPremium: boolean
+  premiumExpiresAt: string | null
+  eventCount: number
+  lastEventType: string
+  lastEventAt: string
+}
+
+export interface AdminSubscription {
+  id: string
+  userId: string
+  revenuecatCustomerId: string
+  productId: string
+  store: string
+  environment: string
+  status: SubscriptionStatus
+  autoRenew: boolean
+  periodType: string | null
+  originalTransactionId: string
+  currentPeriodStartedAt: string
+  currentPeriodExpiresAt: string
+  gracePeriodExpiresAt: string | null
+  cancelReason: string | null
+  expirationReason: string | null
+  priceInPurchasedCurrency: number | null
+  currency: string | null
+  entitlementIds: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export type AdminEventStatus = 'received' | 'processed' | 'failed' | 'skipped'
+
+export interface AdminEvent {
+  eventId: string
+  eventType: string
+  status: AdminEventStatus
+  note: string | null
+  receivedAt: string
+  processedAt: string | null
+  eventTimestampAt: string
+  payload: unknown
+  payloadParseError?: string
+}
+
+export interface AdminUserDetail {
+  user: {
+    id: string
+    displayName: string | null
+    fileName: string | null
+    isAnonymous: boolean
+    isBot: boolean
+    isPremium: boolean
+    premiumExpiresAt: string | null
+  } | null
+  currentSubscription: AdminSubscription | null
+  allSubscriptions: AdminSubscription[]
+  events: AdminEvent[]
+  eventsTruncated: boolean
+}

@@ -107,14 +107,14 @@ export function BotSelector() {
         type="button"
         onClick={() => setIsOpen(true)}
         disabled={isLoading}
-        className="group flex items-center gap-2.5 rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3.5 py-2 text-sm font-medium text-[var(--sea-ink)] shadow-[0_8px_24px_rgba(30,90,72,0.08)] transition hover:border-[color-mix(in_oklab,var(--lagoon-deep)_35%,var(--line))] hover:bg-[var(--link-bg-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+        className="group flex w-full min-w-0 items-center gap-2 rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-2.5 py-1.5 text-sm font-medium text-[var(--sea-ink)] shadow-[0_8px_24px_rgba(30,90,72,0.08)] transition hover:border-[color-mix(in_oklab,var(--lagoon-deep)_35%,var(--line))] hover:bg-[var(--link-bg-hover)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:gap-2.5 sm:px-3.5 sm:py-2"
       >
         {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-[var(--lagoon-deep)]" />
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--lagoon-deep)]" />
         ) : (
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[linear-gradient(135deg,#56c6be,#7ed3bf)] text-white shadow-inner">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#56c6be,#7ed3bf)] text-white shadow-inner sm:h-7 sm:w-7">
             {currentBot ? (
-              <span className="text-base leading-none">
+              <span className="text-sm leading-none sm:text-base">
                 {REGION_FLAG[botRegion(currentBot)]}
               </span>
             ) : (
@@ -123,9 +123,11 @@ export function BotSelector() {
           </span>
         )}
         {currentBot ? (
-          <span className="flex flex-col items-start leading-tight">
-            <span className="text-sm font-semibold">{currentBot.displayName}</span>
-            <span className="text-[11px] text-[var(--sea-ink-soft)]">
+          <span className="flex min-w-0 flex-col items-start leading-tight">
+            <span className="max-w-[150px] truncate text-sm font-semibold sm:max-w-none">
+              {currentBot.displayName}
+            </span>
+            <span className="hidden text-[11px] text-[var(--sea-ink-soft)] sm:inline">
               {REGION_LABEL[botRegion(currentBot)]} ·{' '}
               {shortTimezone(currentBot.timezone)}
             </span>
@@ -133,7 +135,7 @@ export function BotSelector() {
         ) : (
           <span>Chọn bot</span>
         )}
-        <ChevronDown className="h-4 w-4 text-[var(--sea-ink-soft)]" />
+        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[var(--sea-ink-soft)] sm:ml-0" />
       </button>
 
       {isOpen && (

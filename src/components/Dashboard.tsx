@@ -7,10 +7,12 @@ import { SubmitLogsTab } from './SubmitLogsTab'
 import { TrackingResultsTab } from './TrackingResultsTab'
 import { AdvancedTab } from './AdvancedTab'
 import { NotificationsTab } from './NotificationsTab'
+import { SubscriptionsTab } from './subscriptions/SubscriptionsTab'
 import {
   AlertCircle,
   Bell,
   ClipboardList,
+  CreditCard,
   Globe2,
   LineChart,
   Settings2,
@@ -35,6 +37,7 @@ const TABS = [
   { id: 'tracking', label: 'Theo dõi & Kết quả', icon: LineChart },
   { id: 'advanced', label: 'Nâng cao', icon: Settings2 },
   { id: 'notifications', label: 'Thông báo', icon: Bell },
+  { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
@@ -98,10 +101,10 @@ export function Dashboard({ search }: DashboardProps) {
   const activeChallenges = challenges.filter((c) => c.status === 'active').length
 
   return (
-    <main className="min-h-[calc(100vh-200px)] px-4 py-8">
+    <main className="min-h-[calc(100vh-200px)] px-3 py-5 sm:px-4 sm:py-8">
       <div className="page-wrap rise-in">
         {/* Hero header */}
-        <section className="island-shell relative overflow-hidden rounded-3xl px-6 py-7 sm:px-8 sm:py-8">
+        <section className="island-shell relative overflow-hidden rounded-3xl px-4 py-5 sm:px-8 sm:py-8">
           <div
             aria-hidden
             className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-[radial-gradient(circle,var(--hero-a),transparent_70%)]"
@@ -114,16 +117,16 @@ export function Dashboard({ search }: DashboardProps) {
           <div className="relative flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex-1">
               <p className="island-kicker">Social Challenges · QA Console</p>
-              <h1 className="display-title mt-2 text-3xl font-bold leading-tight text-[var(--sea-ink)] sm:text-4xl">
+              <h1 className="display-title mt-2 text-2xl font-bold leading-tight text-[var(--sea-ink)] sm:text-3xl lg:text-4xl">
                 Bảng điều khiển Bot
               </h1>
-              <p className="mt-2 max-w-xl text-sm text-[var(--sea-ink-soft)] sm:text-[15px]">
+              <p className="mt-2 max-w-xl text-xs text-[var(--sea-ink-soft)] sm:text-sm lg:text-[15px]">
                 Mô phỏng người dùng theo khu vực, gửi log, theo dõi kết quả thử thách và
                 kiểm tra notifications — tất cả từ một dashboard.
               </p>
 
               {/* Stat row */}
-              <div className="mt-5 flex flex-wrap gap-2.5">
+              <div className="mt-4 grid grid-cols-1 gap-2 sm:mt-5 sm:flex sm:flex-wrap sm:gap-2.5">
                 <StatChip
                   icon={<span className="text-base leading-none">{REGION_FLAG[region]}</span>}
                   label="Khu vực bot"
@@ -144,7 +147,9 @@ export function Dashboard({ search }: DashboardProps) {
             </div>
 
             <div className="flex flex-shrink-0 sm:justify-end">
-              <BotSelector />
+              <div className="w-full sm:w-auto">
+                <BotSelector />
+              </div>
             </div>
           </div>
         </section>
@@ -152,7 +157,7 @@ export function Dashboard({ search }: DashboardProps) {
         {/* Tabs */}
         <nav
           aria-label="Sections"
-          className="island-shell mt-6 flex flex-wrap items-center gap-1.5 rounded-2xl p-1.5"
+          className="island-shell mt-5 flex items-center gap-1.5 overflow-x-auto rounded-2xl p-1.5 sm:mt-6 sm:flex-wrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
         >
           {TABS.map((tab) => {
             const Icon = tab.icon
@@ -164,24 +169,25 @@ export function Dashboard({ search }: DashboardProps) {
                 onClick={() =>
                   navigate({ search: (prev) => ({ ...prev, tab: tab.id as TabId }) })
                 }
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition sm:flex-initial ${
+                className={`flex shrink-0 snap-start items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition sm:flex-initial sm:text-sm ${
                   active
                     ? 'bg-[linear-gradient(135deg,#56c6be,#7ed3bf)] text-white shadow-[0_8px_22px_rgba(50,143,151,0.25)]'
                     : 'text-[var(--sea-ink-soft)] hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]'
                 }`}
               >
-                <Icon className="h-4 w-4" />
-                <span>{tab.label}</span>
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="whitespace-nowrap">{tab.label}</span>
               </button>
             )
           })}
         </nav>
 
         {/* Content */}
-        <section className="island-shell mt-6 rounded-3xl p-6 sm:p-7">
+        <section className="island-shell mt-5 rounded-2xl p-4 sm:mt-6 sm:rounded-3xl sm:p-7">
           {isLoadingChallenges &&
           activeTab !== 'logs' &&
-          activeTab !== 'notifications' ? (
+          activeTab !== 'notifications' &&
+          activeTab !== 'subscriptions' ? (
             <div className="flex items-center justify-center py-16">
               <div className="text-center">
                 <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-[var(--lagoon-deep)] border-t-transparent" />
@@ -215,6 +221,9 @@ export function Dashboard({ search }: DashboardProps) {
                 />
               )}
               {activeTab === 'notifications' && <NotificationsTab />}
+              {activeTab === 'subscriptions' && (
+                <SubscriptionsTab selectedUserId={search.subUserId} />
+              )}
             </>
           )}
         </section>
