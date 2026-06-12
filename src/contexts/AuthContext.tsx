@@ -1,110 +1,49 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { apiClient, setAccessToken } from '../api/client'
-import { authApi } from '../api/auth'
-import type { AuthUser, Bot } from '../types'
-
-/**
- * Best-effort backfill so the bot's `user_profiles.timezone` matches the
- * machine running the dashboard. Without this, fresh anonymous bots stay on
- * the schema default `'UTC'` and cron-window pushes (`daily_food_log_nudge`
- * 19–21h local, `streak_at_risk` 20–22h, etc.) fire at the wrong wall-clock
- * time. The backend has its own opportunistic backfill from
- * `request.cf.timezone`, but that's empty in `wrangler dev`, so this client
- * call covers local QA. Errors are swallowed — the rest of the dashboard
- * must keep working even if `PUT /profile` 4xx's for any reason.
- */
-async function syncBrowserTimezone(): Promise<void> {
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-    if (!tz || tz === 'UTC') return
-    await apiClient.put('/api/user/profile', { timezone: tz })
-  } catch (err) {
-    console.warn('Timezone sync skipped:', err)
-  }
-}
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { adminApi } from '#/api/admin'
+import { clearTokens, loadTokensFromStorage, setTokens } from '#/api/client'
+import type { AdminUser } from '#/types'
 
 interface AuthContextType {
-  currentUser: AuthUser | null
-  currentBot: Bot | null
+  admin: AdminUser | null
   isLoading: boolean
+  isReady: boolean
   error: string | null
-  bots: Bot[]
-  loginAsBot: (bot: Bot) => Promise<void>
+  login: (username: string, password: string) => Promise<void>
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Bump suffix when the persisted shape changes. v2 added bot.timezone / bot.region;
-// any v1 session is dropped on first load so consumers never see the old shape.
-const STORAGE_KEY = 'auth_session_v2'
-const LEGACY_STORAGE_KEYS = ['auth_session']
+const ADMIN_KEY = 'admin_user'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
-  const [currentBot, setCurrentBot] = useState<Bot | null>(null)
-  const [bots, setBots] = useState<Bot[]>([])
+  const [admin, setAdmin] = useState<AdminUser | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isReady, setIsReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchBots = useCallback(async () => {
-    try {
-      const data = await authApi.getBots()
-      setBots(data.bots)
-    } catch (err) {
-      console.error('Failed to fetch bots:', err)
-    }
-  }, [])
-
-  // Restore auth from localStorage on mount
+  // Restore session on mount (client-only).
   useEffect(() => {
-    // Drop any pre-v2 sessions outright so we never deserialize the old Bot shape.
-    for (const key of LEGACY_STORAGE_KEYS) localStorage.removeItem(key)
-
-    const restoreAuth = () => {
+    const { accessToken } = loadTokensFromStorage()
+    const storedAdmin = window.localStorage.getItem(ADMIN_KEY)
+    if (accessToken && storedAdmin) {
       try {
-        const stored = localStorage.getItem(STORAGE_KEY)
-        if (stored) {
-          const { user, bot, token } = JSON.parse(stored)
-          setCurrentUser(user)
-          setCurrentBot(bot)
-          setAccessToken(token)
-          // Re-sync on restore too — covers the case where a tester opens
-          // the dashboard from a different machine / timezone than last login.
-          void syncBrowserTimezone()
-        }
-      } catch (err) {
-        console.error('Failed to restore auth:', err)
-        localStorage.removeItem(STORAGE_KEY)
+        setAdmin(JSON.parse(storedAdmin))
+      } catch {
+        window.localStorage.removeItem(ADMIN_KEY)
       }
     }
+    setIsReady(true)
+  }, [])
 
-    restoreAuth()
-    fetchBots()
-  }, [fetchBots])
-
-  const loginAsBot = useCallback(async (bot: Bot) => {
+  const login = useCallback(async (username: string, password: string) => {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await authApi.loginAsBot(bot.anonymousId)
-      setCurrentUser(response.user)
-      setCurrentBot(bot)
-      setAccessToken(response.tokens.accessToken)
-
-      // Save to localStorage
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          user: response.user,
-          bot: bot,
-          token: response.tokens.accessToken,
-        })
-      )
-
-      // Fire-and-forget — runs after token is set so the request carries auth.
-      // Don't block login if it fails.
-      void syncBrowserTimezone()
+      const res = await adminApi.login(username, password)
+      setTokens(res.tokens)
+      setAdmin(res.admin)
+      window.localStorage.setItem(ADMIN_KEY, JSON.stringify(res.admin))
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed'
       setError(message)
@@ -115,25 +54,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const logout = useCallback(() => {
-    setCurrentUser(null)
-    setCurrentBot(null)
-    setAccessToken(null)
+    clearTokens()
+    setAdmin(null)
     setError(null)
-    localStorage.removeItem(STORAGE_KEY)
+    window.localStorage.removeItem(ADMIN_KEY)
   }, [])
 
   return (
-    <AuthContext.Provider
-      value={{
-        currentUser,
-        currentBot,
-        isLoading,
-        error,
-        bots,
-        loginAsBot,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ admin, isLoading, isReady, error, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
