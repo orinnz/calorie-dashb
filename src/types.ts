@@ -132,3 +132,39 @@ export interface ChallengeTemplateInput {
 
 export const SUPPORTED_LOCALES = ['en', 'vi', 'fr', 'de', 'es', 'pt', 'ko', 'ru'] as const
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
+
+// ── skins ───────────────────────────────────────────────────────────────────
+export type SkinType = 'free' | 'paid' | 'premium'
+export type SkinCategory = 'drinks' | 'nature' | 'weather' | 'effects' | 'festive'
+
+export const SKIN_TYPES: SkinType[] = ['free', 'paid', 'premium']
+export const SKIN_CATEGORIES: SkinCategory[] = [
+  'drinks',
+  'nature',
+  'weather',
+  'effects',
+  'festive',
+]
+
+export interface Skin {
+  id: string
+  name: string
+  slug: string
+  type: SkinType
+  amount: number | null
+  category: SkinCategory
+  active: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SkinInput {
+  name: string
+  slug: string
+  type: SkinType
+  amount?: number | null
+  category: SkinCategory
+  active?: boolean
+  sortOrder?: number
+}

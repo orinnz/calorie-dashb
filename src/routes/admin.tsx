@@ -1,6 +1,6 @@
 import { Link, Outlet, createFileRoute, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { BarChart3, LogOut, Trophy } from 'lucide-react'
+import { BarChart3, LogOut, Sparkles, Trophy } from 'lucide-react'
 import { useAuth } from '#/contexts/AuthContext'
 import ThemeToggle from '#/components/ThemeToggle'
 
@@ -11,6 +11,7 @@ export const Route = createFileRoute('/admin')({
 const NAV = [
   { to: '/admin', label: 'Dashboard', icon: BarChart3, exact: true },
   { to: '/admin/challenges', label: 'Challenges', icon: Trophy, exact: false },
+  { to: '/admin/skins', label: 'Skins', icon: Sparkles, exact: false },
 ]
 
 function AdminLayout() {

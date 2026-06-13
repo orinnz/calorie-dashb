@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminChallengesRouteImport } from './routes/admin/challenges'
+import { Route as AdminSkinsRouteImport } from './routes/admin/skins'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -40,18 +41,25 @@ const AdminChallengesRoute = AdminChallengesRouteImport.update({
   path: '/challenges',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSkinsRoute = AdminSkinsRouteImport.update({
+  id: '/skins',
+  path: '/skins',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/admin/challenges': typeof AdminChallengesRoute
+  '/admin/skins': typeof AdminSkinsRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/admin/challenges': typeof AdminChallengesRoute
+  '/admin/skins': typeof AdminSkinsRoute
   '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
@@ -60,14 +68,28 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/admin/challenges': typeof AdminChallengesRoute
+  '/admin/skins': typeof AdminSkinsRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/login' | '/admin/challenges' | '/admin/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/admin/challenges'
+    | '/admin/skins'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/admin/challenges' | '/admin'
-  id: '__root__' | '/' | '/admin' | '/login' | '/admin/challenges' | '/admin/'
+  to: '/' | '/login' | '/admin/challenges' | '/admin/skins' | '/admin'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/admin/challenges'
+    | '/admin/skins'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -113,16 +135,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminChallengesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/skins': {
+      id: '/admin/skins'
+      path: '/skins'
+      fullPath: '/admin/skins'
+      preLoaderRoute: typeof AdminSkinsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
   AdminChallengesRoute: typeof AdminChallengesRoute
+  AdminSkinsRoute: typeof AdminSkinsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminChallengesRoute: AdminChallengesRoute,
+  AdminSkinsRoute: AdminSkinsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
